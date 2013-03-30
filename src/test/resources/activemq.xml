@@ -1,0 +1,45 @@
+<?xml version="1.0"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:amq="http://activemq.apache.org/schema/core" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:camel="http://camel.apache.org/schema/spring"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+  http://www.springframework.org/schema/beans/spring-beans-2.0.xsd
+  http://activemq.apache.org/schema/core
+  http://activemq.apache.org/schema/core/activemq-core.xsd
+  http://camel.apache.org/schema/spring http://camel.apache.org/schema/spring/camel-spring.xsd
+  ">
+	<broker xmlns="http://activemq.apache.org/schema/core"
+		brokerName="localhost.monitor" useJmx="true" dataDirectory="target/activemq-data"
+		persistent="false" schedulerSupport="true">
+		<destinationPolicy>
+			<policyMap>
+				<policyEntries>
+					<policyEntry queue="stat.inbound">
+						<deadLetterStrategy>
+							<individualDeadLetterStrategy
+								queuePrefix="DLQ." useQueueForQueueMessages="true"
+								processExpired="false" />
+						</deadLetterStrategy>
+						<dispatchPolicy>
+							<roundRobinDispatchPolicy />
+						</dispatchPolicy>
+					</policyEntry>
+				</policyEntries>
+			</policyMap>
+		</destinationPolicy>
+
+		<managementContext>
+			<managementContext connectorPort="10099" />
+		</managementContext>
+
+		<plugins>
+			<statisticsBrokerPlugin />
+		</plugins>
+
+		<transportConnectors>
+			<transportConnector name="openwire" uri="tcp://localhost:51516" />
+		</transportConnectors>
+
+	</broker>
+
+</beans>
