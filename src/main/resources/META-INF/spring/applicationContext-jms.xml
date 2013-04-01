@@ -9,6 +9,7 @@
 			<bean class="org.apache.activemq.ActiveMQConnectionFactory">
 				<property name="brokerURL" value="${activemq.broker.url}" />
 				<property name="redeliveryPolicy" ref="defaultRedeliveryPolicy" />
+				<property name="sendTimeout" value="3000"></property>
 			</bean>
 		</property>
 	</bean>

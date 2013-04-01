@@ -6,20 +6,15 @@ import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.apache.camel.ConsumerTemplate;
-import org.apache.camel.Exchange;
 import org.apache.camel.ExchangePattern;
-import org.apache.camel.Produce;
-import org.apache.camel.ProducerTemplate;
 import org.apache.camel.builder.RouteBuilder;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import com.nordija.activemq.FailoverBrokerFacade;
 import com.nordija.activemq.admin.ActiveMQBrokerAdmin;
 
 @Service("brokerMonitor")
@@ -35,14 +30,10 @@ public class BrokerMonitor extends RouteBuilder implements Monitor{
 	@Value("${broker.data.collection.count}")
 	private long repeatCount;
 
-	@Autowired
-	private ActiveMQBrokerAdmin brokerAdmin;
-	@Autowired
-	private BrokerMonitorHelper brokerMonitorHelper;
+	@Autowired private ActiveMQBrokerAdmin brokerAdmin;
+	@Autowired private BrokerMonitorHelper brokerMonitorHelper;
+	@Autowired private FailoverBrokerFacade failoverBrokerFacade;
 
-	@Produce(uri = "activemq:queue:monitor.ping")
-	private ProducerTemplate producer;
-	
 	private AtomicBoolean isRunning = new AtomicBoolean(false);
 
 	@Override
@@ -101,19 +92,10 @@ public class BrokerMonitor extends RouteBuilder implements Monitor{
 
 	@Override
 	public boolean testConnection() {
-		producer.sendBody(DateTime.now(DateTimeZone.UTC).getMillis());
-		ConsumerTemplate consumer = getContext().createConsumerTemplate();
-
 		try {
-			consumer.start();
-		} catch (Exception e) {
-			logger.error("Could not connect to the message broker. "+e.getMessage());
-			return false;
-		}
-		
-		Exchange receive = consumer.receive("activemq:queue:monitor.ping", 3000);
-		if(receive == null){
-			logger.error("ActiveMQ did not respond to ping after three seconds.");
+			failoverBrokerFacade.getBrokerFacade().getBrokerAdmin().isSlave();
+		} catch (Exception ex) {
+			logger.error("Could not connect to the ActiveMQ broker service.", ex);
 			return false;
 		}
 		return true;
