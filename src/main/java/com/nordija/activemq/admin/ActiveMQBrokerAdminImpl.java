@@ -17,6 +17,8 @@ import javax.management.openmbean.CompositeData;
 import org.apache.activemq.broker.jmx.QueueViewMBean;
 import org.apache.activemq.web.BrokerFacade;
 import org.apache.commons.collections.CollectionUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -25,6 +27,9 @@ import com.nordija.activemq.NoSuchMessageException;
 
 @Service("activeMQBrokerAdmin")
 public class ActiveMQBrokerAdminImpl implements ActiveMQBrokerAdmin{
+	private static final Logger logger = LoggerFactory.getLogger(ActiveMQBrokerAdminImpl.class);
+	
+	
     @Autowired private FailoverBrokerFacade failoverBrokerFacade;
     @Autowired private ActiveMQFacadeHelper amqFacadeHelper;
     
@@ -101,6 +106,18 @@ public class ActiveMQBrokerAdminImpl implements ActiveMQBrokerAdmin{
 		return buildQueueInfo(qvb, brokerFacade.getBrokerName());
 	}
 
+	
+	@Override
+	public int getMaxPageSize(String queue) throws Exception {
+		BrokerFacade brokerFacade = failoverBrokerFacade.getBrokerFacade();
+
+		QueueViewMBean qvm = brokerFacade.getQueue(queue);
+		if(qvm == null){
+			return 400;  // ActiveMQ default is 400
+		}
+		return qvm.getMaxPageSize();
+	}
+
 	@Override
     public List<Map<String, Object>> getQueueInfo() throws Exception {
     	List<Map<String, Object>> result = new ArrayList<Map<String, Object>>();
@@ -114,9 +131,9 @@ public class ActiveMQBrokerAdminImpl implements ActiveMQBrokerAdmin{
 		
 		return result;
     }
-	
+
 	@Override
-	public List<Map<String, Object>> getMessages(String queueName, String selector) throws Exception{
+	public List<Map<String, Object>> getMessages(String queueName, String selector, int offset, int endRow) throws Exception{
 		BrokerFacade brokerFacade = failoverBrokerFacade.getBrokerFacade();
 		
 		QueueViewMBean queue = brokerFacade.getQueue(queueName);
@@ -130,16 +147,27 @@ public class ActiveMQBrokerAdminImpl implements ActiveMQBrokerAdmin{
 		}else{			
 			msgs = queue.browse();
 		}
-		// Take only the first 100 messages. ActiveMQ returnes maxBrowsePageSize (default 400)
-		int i=0;
-		for (CompositeData cd : msgs) {
-			if(i++ >= 100){
-				break;
-			}
+		
+		if(offset >= msgs.length){
+			return null;
+		}
+		if(endRow == -1){
+			endRow = queue.getMaxPageSize();
+		}
+		int upperBound = Math.min(endRow, msgs.length);
+		for(int i=offset; i < upperBound; i++){
+			CompositeData cd = msgs[i];
 			result.add(buildMsg(ActiveMQFacadeHelper.createMessageView(cd, false, false), queueName, brokerFacade.getBrokerName()));
 		}
 		
-		return result;
+		logger.debug("Requested rows {}-{}. Returning {} messages. maxBrowsePageSize is {}", new Object[]{offset, endRow, result.size(), queue.getMaxPageSize()});
+				
+		return result;		
+	}
+	
+	@Override
+	public List<Map<String, Object>> getMessages(String queueName, String selector) throws Exception{
+		return getMessages(queueName, selector, 0, -1);
 	}
 
 	@Override

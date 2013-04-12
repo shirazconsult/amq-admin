@@ -35,7 +35,6 @@ public interface ActiveMQBrokerAdmin {
 	public Map<String, Object> getBrokerInfo() throws Exception;
 	List<Map<String, Object>> getQueueInfo() throws Exception;
 	Map<String, Object> getQueueInfo(String qName) throws Exception;
-	List<Map<String, Object>> getMessages(String queueName, String selector) throws Exception;
 	Map<String, Object> getMessage(String queueName, String msgId) throws Exception;
 	void deleteMessage(String queueName, List<String> msgIds) throws Exception;
 	void moveMessage(String fromQueue, String toQueue, List<String> msgIds) throws Exception;
@@ -44,4 +43,8 @@ public interface ActiveMQBrokerAdmin {
 	void purgeQueue(String queue) throws Exception;
 	void deleteQueue(String queue) throws Exception;
 	void createQueue(String queue) throws Exception;
+	List<Map<String, Object>> getMessages(String queueName, String selector) throws Exception;
+	List<Map<String, Object>> getMessages(String queueName, String selector,
+			int offset, int numOfRows) throws Exception;
+	int getMaxPageSize(String queue) throws Exception;
 }
