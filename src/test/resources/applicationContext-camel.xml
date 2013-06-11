@@ -7,12 +7,14 @@
                 http://camel.apache.org/schema/spring http://camel.apache.org/schema/spring/camel-spring.xsd
         ">
 
-	<camelContext id="context" xmlns="http://camel.apache.org/schema/spring">
-		<contextScan />
-		<jmxAgent id="amqAdminAgent" usePlatformMBeanServer="true"
-			createConnector="true" mbeanObjectDomainName="monitor"
-			serviceUrlPath="monitor" registerAlways="true" registryPort="1199"/>
+	<camelContext id="amqMonitorContext" xmlns="http://camel.apache.org/schema/spring">
+		<camel:routeBuilder ref="brokerMonitor"/>
+<!-- 		<contextScan /> -->
+<!-- 		<jmxAgent id="amqAdminAgent" usePlatformMBeanServer="true" -->
+<!-- 			createConnector="true" mbeanObjectDomainName="amqmonitor" -->
+<!-- 			serviceUrlPath="amqmonitor" registerAlways="true" registryPort="1199"/> -->
 		
 	</camelContext>
 
+	<bean id="brokerMonitor" class="com.nordija.activemq.monitor.BrokerMonitor" />
 </beans>

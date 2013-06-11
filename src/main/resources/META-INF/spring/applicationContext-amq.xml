@@ -23,7 +23,6 @@
 		<property name="systemPropertiesModeName" value="SYSTEM_PROPERTIES_MODE_OVERRIDE" />
 	</bean>
 
-	<import resource="classpath*:META-INF/spring/applicationContext-jms.xml" />
-	<import resource="classpath*:META-INF/spring/applicationContext-camel.xml" />
+	<import resource="applicationContext-jms.xml" />
 
 </beans>

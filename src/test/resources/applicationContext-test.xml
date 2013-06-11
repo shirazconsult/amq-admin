@@ -24,6 +24,6 @@
 	</bean>
 
 	<import resource="classpath*:META-INF/spring/applicationContext-jms.xml" />
-	<import resource="classpath*:META-INF/spring/applicationContext-camel.xml" />
+	<import resource="applicationContext-camel.xml" />
 
 </beans>

@@ -12,12 +12,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
 
 import com.nordija.activemq.FailoverBrokerFacade;
 import com.nordija.activemq.admin.ActiveMQBrokerAdmin;
 
-@Service("brokerMonitor")
 public class BrokerMonitor extends RouteBuilder implements Monitor{
 	private final static Logger logger = LoggerFactory.getLogger(BrokerMonitor.class);
 	
@@ -29,7 +27,7 @@ public class BrokerMonitor extends RouteBuilder implements Monitor{
 	private long interval;
 	@Value("${broker.data.collection.count}")
 	private long repeatCount;
-
+	
 	@Autowired private ActiveMQBrokerAdmin brokerAdmin;
 	@Autowired private BrokerMonitorHelper brokerMonitorHelper;
 	@Autowired private FailoverBrokerFacade failoverBrokerFacade;
@@ -39,11 +37,11 @@ public class BrokerMonitor extends RouteBuilder implements Monitor{
 	@Override
 	public void configure() throws Exception {
 		from("timer:brokerMonitorTimer?fixedRate=true&period=" + interval + "&repeatCount=" + repeatCount).routeId("broker.monitor").noAutoStartup()
-			.setBody(simple(""))
+		.setBody(simple(""))
 		.to(ExchangePattern.InOut,
-				"activemq:queue:ActiveMQ.Statistics.Broker?replyToType=Temporary&disableTimeToLive=true&requestTimeout=5000&testConnectionOnStartup=true")
+			"activemq:queue:ActiveMQ.Statistics.Broker?replyToType=Temporary&disableTimeToLive=true&requestTimeout=5000&testConnectionOnStartup=false")
 		.multicast().parallelProcessing().to("direct:staticdata", "direct:dynamicdata");
-
+		
 		from("direct:dynamicdata").routeId("broker.dynamicData.processor")
 		.to("bean:brokerMonitorHelper?method=extractDynamicData")
 		.to("direct:dynamicDataFile");
